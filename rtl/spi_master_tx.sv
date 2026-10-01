@@ -12,6 +12,7 @@ module spi_master_tx
 (
     input  logic        clk,
     input  logic        rstn,
+    input  logic        sftw_rst,
     input  logic        en,
     input  logic        tx_edge,
     output logic        tx_done,
@@ -39,7 +40,9 @@ module spi_master_tx
 
   enum logic [0:0] { IDLE, TRANSMIT } tx_CS, tx_NS;
 
-  assign sdo0 = (en_quad_in) ? data_int[28] : data_int[31];
+  //Draws MOSI high when write-operation is not in progress.
+  assign sdo0 = (tx_CS == IDLE) ? 1'b1 : (en_quad_in) ? data_int[28] : data_int[31];
+
   assign sdo1 = data_int[29];
   assign sdo2 = data_int[30];
   assign sdo3 = data_int[31];
@@ -120,10 +123,20 @@ module spi_master_tx
     end
     else
     begin
-      counter      <= counter_next;
-      counter_trgt <= counter_trgt_next;
-      data_int     <= data_int_next;
-      tx_CS        <= tx_NS;
+
+      if(sftw_rst) begin
+        counter <= 0;
+        tx_CS <= IDLE;
+        data_int <= 32'h0;
+        counter_trgt <= 0;
+      end else begin
+        counter      <= counter_next;
+        tx_CS        <= tx_NS;
+        data_int     <= data_int_next;
+        counter_trgt <= counter_trgt_next;
+      end
+
+      
     end
   end
 endmodule

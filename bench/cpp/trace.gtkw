@@ -1,0 +1,83 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Wed Aug  5 12:52:49 2026
+[*]
+[dumpfile] "/home/aapo/Desktop/SoC_hub/apb_spi/bench/cpp/trace.vcd"
+[dumpfile_mtime] "Wed Aug  5 12:51:23 2026"
+[dumpfile_size] 440115307
+[savefile] "/home/aapo/Desktop/SoC_hub/apb_spi/bench/cpp/trace.gtkw"
+[timestart] 13410000
+[size] 1366 721
+[pos] -1 -1
+*-23.699999 17930600 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.apb_spi_master.
+[sst_width] 266
+[signals_width] 318
+[sst_expanded] 1
+[sst_vpaned_height] 200
+@200
+-SPI
+@28
+TOP.apb_spi_master.u_spictrl.spi_clk
+TOP.apb_spi_master.u_spictrl.spi_csn0
+TOP.apb_spi_master.u_spictrl.spi_sdi1
+TOP.apb_spi_master.u_spictrl.spi_sdo0
+TOP.apb_spi_master.u_spictrl.tx_done
+TOP.apb_spi_master.u_spictrl.rx_done
+@24
+TOP.apb_spi_master.u_axiregs.spi_data_len[15:0]
+@200
+-
+-RXFIFO
+@22
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[0][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[1][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[2][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[3][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[4][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[5][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[6][31:0]
+@23
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[7][31:0]
+@22
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[8][31:0]
+[color] 1
+TOP.apb_spi_master.u_rxfifo.buffer[9][31:0]
+@200
+-
+-TXFIFO
+@22
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[0][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[1][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[2][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[3][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[4][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[5][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[6][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[7][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[8][31:0]
+[color] 5
+TOP.apb_spi_master.u_txfifo.buffer[9][31:0]
+@200
+-
+[pattern_trace] 1
+[pattern_trace] 0

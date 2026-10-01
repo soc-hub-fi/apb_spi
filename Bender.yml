@@ -8,6 +8,8 @@ package:
     - "Antti Nurmi <antti.nurmi@tuni.fi>"
 
 dependencies:
+  #apb: { git: "https://github.com/pulp-platform/apb.git", rev: "master"}
+  common_verification: { git: "https://github.com/pulp-platform/common_verification.git", version: 0.2.5 }
 
 sources:
   - rtl/spi_master_fifo.sv
@@ -17,3 +19,10 @@ sources:
   - rtl/spi_master_controller.sv
   - rtl/spi_master_apb_if.sv
   - rtl/apb_spi_master.sv
+  - bench/tb_systemverilog/sd_reg_pkg.sv
+  - bench/tb_systemverilog/apb_interface.sv
+  - bench/tb_systemverilog/spi_interface.sv
+  - bench/tb_systemverilog/tb_apb_spi.sv
+  - bench/tb_systemverilog/vip_apb_driver.sv
+  - bench/tb_systemverilog/vip_apb_spi_top.sv
+

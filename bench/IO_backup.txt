@@ -1,0 +1,33 @@
+// DUT I/O
+
+// DUT I/O:
+    // APB signals
+    logic                      HCLK,
+    logic                      HRESETn,
+    logic [APB_ADDR_WIDTH-1:0] PADDR,
+    logic               [31:0] PWDATA,
+    logic                      PWRITE,
+    logic                      PSEL,
+    logic                      PENABLE,
+    logic               [31:0] PRDATA,
+    logic                      PREADY,
+    logic                      PSLVERR,
+
+    // interrupt events
+    logic                [1:0] events_o,
+
+    // SPI signals
+    logic                      spi_clk,
+    logic                      spi_csn0,
+    logic                      spi_csn1,
+    logic                      spi_csn2,
+    logic                      spi_csn3,
+    logic                [1:0] spi_mode,
+    logic                      spi_sdo0,
+    logic                      spi_sdo1,
+    logic                      spi_sdo2,
+    logic                      spi_sdo3,
+    logic                      spi_sdi0,
+    logic                      spi_sdi1,
+    logic                      spi_sdi2,
+    logic                      spi_sdi3

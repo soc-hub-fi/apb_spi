@@ -28,6 +28,8 @@ module apb_spi_master
     output logic                      PSLVERR,
 
     output logic                [1:0] events_o,
+    output logic		              out_en,
+
 
     output logic                      spi_clk,
     output logic                      spi_csn0,
@@ -63,6 +65,7 @@ module apb_spi_master
     logic         spi_wr;
     logic         spi_qrd;
     logic         spi_qwr;
+    logic         spi_cs_trail;
     logic   [3:0] spi_csreg;
     logic  [31:0] spi_data_tx;
     logic         spi_data_tx_valid;
@@ -112,6 +115,8 @@ module apb_spi_master
     assign s_rise_int_rx = (elements_rx >= s_th_rx);
 
     assign spi_status = {{FILL_BITS{1'b0}},elements_tx,{FILL_BITS{1'b0}},elements_rx,9'h0,spi_ctrl_status};
+
+    assign out_en = spi_ctrl_status[5];
 
     assign events_o[0] = s_int_tx | s_int_rx;
     assign events_o[1] = s_eot;
@@ -272,6 +277,7 @@ module apb_spi_master
         .spi_wr            ( spi_wr            ),
         .spi_qrd           ( spi_qrd           ),
         .spi_qwr           ( spi_qwr           ),
+        .spi_cs_trail      ( spi_cs_trail      ),
         .spi_csreg         ( spi_csreg         ),
         .spi_int_th_rx     ( s_th_rx           ),
         .spi_int_th_tx     ( s_th_tx           ),
@@ -352,6 +358,7 @@ module apb_spi_master
         .spi_wr                 ( spi_wr                 ),
         .spi_qrd                ( spi_qrd                ),
         .spi_qwr                ( spi_qwr                ),
+        .spi_cs_trail           ( spi_cs_trail           ),
         .spi_csreg              ( spi_csreg              ),
         .spi_ctrl_data_tx       ( spi_ctrl_data_tx       ),
         .spi_ctrl_data_tx_valid ( spi_ctrl_data_tx_valid ),

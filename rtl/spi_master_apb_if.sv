@@ -57,6 +57,7 @@ module spi_master_apb_if
     output logic                      spi_int_en,
     output logic                      spi_int_cnt_en,
     output logic                      spi_int_rd_sta,
+    output logic                      spi_cs_trail,
     output logic                      spi_swrst,
     output logic                      spi_rd,
     output logic                      spi_wr,
@@ -86,6 +87,7 @@ module spi_master_apb_if
         if ( HRESETn == 1'b0 )
         begin
             spi_swrst         <= 1'b0;
+            spi_cs_trail      <= 1'b0;
             spi_rd            <= 1'b0;
             spi_wr            <= 1'b0;
             spi_qrd           <= 1'b0;
@@ -120,12 +122,13 @@ module spi_master_apb_if
 
                   `REG_STATUS:
                   begin
-                      spi_rd    <= PWDATA[0];
-                      spi_wr    <= PWDATA[1];
-                      spi_qrd   <= PWDATA[2];
-                      spi_qwr   <= PWDATA[3];
-                      spi_swrst <= PWDATA[4];
-                      spi_csreg <= PWDATA[11:8];
+                      spi_rd       <= PWDATA[0];
+                      spi_wr       <= PWDATA[1];
+                      spi_qrd      <= PWDATA[2];
+                      spi_qwr      <= PWDATA[3];
+                      spi_swrst    <= PWDATA[4];
+                      spi_cs_trail <= PWDATA[5];
+                      spi_csreg    <= PWDATA[11:8];
                   end
 
                   `REG_CLKDIV:

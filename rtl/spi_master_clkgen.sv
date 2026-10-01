@@ -12,6 +12,7 @@ module spi_master_clkgen
 (
     input  logic                        clk,
     input  logic                        rstn,
+    input  logic                        sw_rst,
     input  logic                        en,
     input  logic          [7:0]         clk_div,
     input  logic                        clk_div_valid,
@@ -64,15 +65,23 @@ module spi_master_clkgen
         end
         else
         begin
-            counter_trgt <= counter_trgt_next;
-            if ( !((spi_clk==1'b0)&&(~en)) )
-            begin
-                running <= 1'b1;
-                spi_clk <= spi_clk_next;
-                counter <= counter_next;
+            if(sw_rst) begin
+                counter_trgt <= 'h0;
+                counter      <= 'h0;
+                spi_clk      <= 1'b0;
+                running      <= 1'b0;
+            end else begin
+
+                counter_trgt <= counter_trgt_next;
+                if ( !((spi_clk==1'b0)&&(~en)) )
+                begin
+                    running <= 1'b1;
+                    spi_clk <= spi_clk_next;
+                    counter <= counter_next;
+                end
+                else
+                    running <= 1'b0;
             end
-            else
-                running <= 1'b0;
         end
     end
 

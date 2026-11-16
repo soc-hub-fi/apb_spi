@@ -7,7 +7,7 @@ module vip_sd_card #(
     input logic cs,
     input logic sclk,
     output logic miso
-); 
+);
 
     import sd_reg_pkg::ocr_t;
     ocr_t ocr = '{1'b0, 1'b0, 1'b0, 4'b0, 9'h1FF, 7'hFF, 1'b0, 7'hFF};
@@ -21,7 +21,7 @@ module vip_sd_card #(
         if (fd == 0) begin
         $display("Failed to open the SD-card image!");
         $finish;
-        end        
+        end
         $fclose(fd);
     end
 
@@ -62,35 +62,85 @@ module vip_sd_card #(
         } cmd_num;
     cmd_num cmd;
 
+    logic [4:0] init_cmd_checklist;
     logic [7:0] counter;
     logic [47:0] data_packet;
+
     // when CRC is detected, rsp is asserted to enable response.
     bit rsp = 0;
+
     logic miso_line;
     logic [39:0] tx;
-
+    // flag to test how driver handles when card is not immediattely ready after acmd41
+    bit acmd_loop = 0;
+    // counter for testing whether driver gets stuck looping ACMD41
+    logic[3:0] forever_loop = 0;
     // "task reaches end" flags
     bit miso_gen_end_flag, cmd_crc_check_end_flag;
 
-    // does not take into account interruptions in sclk 
-    task automatic powerup(logic mosi, logic cs, logic sclk);
-        logic [7:0] cycle_cnt = 0;
-        @(posedge sclk);
 
+        logic [7:0] cycle_cnt = 0;
+    // does not take into account interruptions in sclk
+    task automatic powerup();
+    $display("\tSD-CARD powerup start");
+        @(posedge sclk);
         for (cycle_cnt = 0; cycle_cnt < 74; cycle_cnt++) begin
-            if(~cs | ~mosi) begin
-                $display("\tSD-CARD: powerup of an sd card needs atleast 74 sclk cycles where cs & mosi are high");
+            assert(cs & mosi);
+            else begin
+                $fatal(0,"\nSD-CARD: powerup of an sd card needs atleast 74 sclk cycles where cs & mosi are high");
             end
             @(posedge sclk);
         end
         $display("\tSD-CARD: powerup finished correctly, CMD0 can be sent.");
     endtask
 
+    task automatic cmd_checklist(cmd_num cmd);
+        case(cmd)
+            CMD0: begin
+                init_cmd_checklist[0] = 1;
+            end
+            CMD8: begin
+                assert(init_cmd_checklist[0])
+                    else $fatal(0, "\n Expecting CMD0, got %s", cmd.name());
+                init_cmd_checklist[1] = 1;
+            end
+            CMD55:begin
+                assert(init_cmd_checklist[1:0] == 2'b11)
+                    else $fatal(0, "\n Earlier init commands have not been issued, wrong init order, got CMD: %s", cmd.name());
+
+                init_cmd_checklist[2] = 1;
+
+            end
+            ACMD41:begin
+                assert(init_cmd_checklist[1:0] == 2'b11)
+                    else $fatal(0, "\n Earlier init commands have not been issued, wrong init order, got CMD: %s", cmd.name());
+                assert(init_cmd_checklist[2])
+                    else $fatal(0, "\n CMD55 needs to be received before ACMD41, got CMD: %s", cmd.name());
+                if(init_cmd_checklist[3])begin
+                    forever_loop++;
+                    assert(forever_loop!=4'b1111)
+                        else $fatal(0, "\n ACMD41 seems to be looping forever even though 00 response has been sent. \n Max Amount of loops set: 15");
+                end
+                init_cmd_checklist[2] = 0;
+            end
+            CMD58: begin
+                assert(init_cmd_checklist[1:0] == 2'b11)
+                    else $fatal(0, "\n Earlier init commands have not been issued, wrong init order, got CMD: %s", cmd.name());
+                assert(init_cmd_checklist[3])
+                    else $fatal(0, "\n ACMD41 not ready, card never responded with 0");
+                init_cmd_checklist[4]=1;
+            end
+            default: begin
+                assert(init_cmd_checklist == 5'b11111)
+                else $fatal(0, "\n Init has not been completed before read and write");
+            end
+        endcase
+    endtask
 
     task automatic send_byte(
         input [7:0] data_byte
     );
-        logic [7:0] tmp_byte;        
+        logic [7:0] tmp_byte;
         begin
             tmp_byte = data_byte;
             for (integer j = 0; j < 8; j++)begin
@@ -109,32 +159,32 @@ module vip_sd_card #(
             tmp_byte = 8'h00;
             for (integer j = 0; j < 8; j++) begin
                 @(posedge sclk);
-                tmp_byte[7-j] = mosi;             
-                data_byte = tmp_byte;    
+                tmp_byte[7-j] = mosi;
+                data_byte = tmp_byte;
             end
         end
     endtask
-    
+
     task automatic miso_generate();
         miso_gen_end_flag = 0;
-        do begin            
-            while(~rsp) begin 
+        do begin
+            while(~rsp) begin
                 miso_line = 1;
                 @(negedge sclk);
-            end;                        
-            
+            end;
+
             if (rx_cmd.read_block) begin
                 $display("SD-CARD: START BLOCK READ!\n");
-                
+
                 //Send token
                 send_byte(8'hFE);
-                $display("SD-CARD: TOKEN SENDED!\n");
+                $display("SD-CARD: TOKEN SENT!\n");
 
                 //Read image
                 fd = $fopen("sdcard.img", "r");
                 $fread(sector_buf,fd);
                 $fclose(fd);
-        
+
                 //Send 512 bytes of data
                 for (integer k = 0; k < 512; k++)begin
                     send_byte(sector_buf[k]);
@@ -146,7 +196,7 @@ module vip_sd_card #(
 
             else if (rx_cmd.write_block) begin
                 logic [7:0] input_byte;
-                
+
                 $display("SD-CARD: START BLOCK WRITE!");
 
                 // Read bytes until start token 0xFE is received
@@ -159,45 +209,86 @@ module vip_sd_card #(
                 //Write 512 bytes of data
                 fd = $fopen("sdcard.img", "w");
                 for (integer k = 0; k < 512; k++)begin
-                    receive_byte(input_byte);                    
-                    $fwrite(fd, "%c",input_byte);                    
+                    receive_byte(input_byte);
+                    $fwrite(fd, "%c",input_byte);
                 end
-                
+
                 //CRC -> not implemented yet
 
                 $fclose(fd);
-                $display("SD-CARD: BLOCK WRITE COMPLETE!");                
+                $display("SD-CARD: BLOCK WRITE COMPLETE!");
 
             end
 
             else begin
-                //Send regular CMD response
-                tx = rx_cmd.response << (40-rx_cmd.resp_len*8);
-                for (integer i = 0; i < rx_cmd.resp_len; i++) begin
-                    send_byte(tx[39:32]);
-                    tx = tx << 8;
+                // if cmd is ACMD41 loop the cards response once to test how driver handles ready
+                if((rx_cmd.cmd == SD_CMDS[3].cmd))begin
+
+                    if(!acmd_loop)begin
+                        //Send regular CMD response
+                        tx = 40'h01 << (40-rx_cmd.resp_len*8);
+                        for (integer i = 0; i < rx_cmd.resp_len; i++) begin
+                            send_byte(tx[39:32]);
+                            tx = tx << 8;
+                        end
+                        acmd_loop = 1;
+
+                    end else begin
+
+                        //Send regular CMD response
+                        tx = rx_cmd.response << (40-rx_cmd.resp_len*8);
+                        for (integer i = 0; i < rx_cmd.resp_len; i++) begin
+                            send_byte(tx[39:32]);
+                            tx = tx << 8;
+                        end
+                        if (rx_cmd.cmd ==  SD_CMDS[3].cmd) begin
+                            // ACMD41 check off the list
+                            init_cmd_checklist[3] = 1;
+                            // ACMD55 check off the list
+                            init_cmd_checklist[2] = 1;
+                        end
+                    end
+                // After one response of not ready, send ready response and check ACMD41 off the checklist
+                end else begin
+                    $display("\t###SD-CARD: Task miso_generate reached second acmd ###");
+
+                    //Send regular CMD response
+                    tx = rx_cmd.response << (40-rx_cmd.resp_len*8);
+                    for (integer i = 0; i < rx_cmd.resp_len; i++) begin
+                        send_byte(tx[39:32]);
+                        tx = tx << 8;
+                    end
+                    if (rx_cmd.cmd ==  SD_CMDS[3].cmd) begin
+
+                        init_cmd_checklist[3] = 1;
+                    end
+
                 end
             end
             rsp = 0;
         end while(rsp);
         miso_gen_end_flag = 1;
         $display("\t###SD-CARD: Task miso_generate reached its end ###");
-        
+
     endtask
 
+    bit cmd_detected = 0;
     task automatic detect_CMD_and_CRC();
         data_packet = 0;
-        cmd_crc_check_end_flag = 0;        
-
-        // cs and mosi should be high for powerup, when cs goes low, we read mosi
-        @(negedge mosi);
+        cmd_crc_check_end_flag = 0;
+        cmd_detected = 0;
+        // cs and mosi should be high for powerup, when cs & mosi go low, transfer is initiated
+        do begin
+            @(posedge sclk);
+        end while (~(~cs & ~mosi));
 
         //CMD and CRC reading
-        do begin @(posedge sclk);
+        do begin  : Check_cmd
             data_packet[0] =  mosi;
-            counter++; 
-            if (counter < 8'd48) begin
+            counter++;
+            if (counter < 8'd48) begin : read_mosi
                 data_packet =  data_packet << 1;
+                @(posedge sclk);
             end
             else begin
                 counter = 0;
@@ -206,17 +297,20 @@ module vip_sd_card #(
                 rx_cmd.cmd = {data_packet[47:40]};
 
                 //Search matching command from the structure
-                foreach (SD_CMDS[i]) begin
-                    if (SD_CMDS[i].cmd == rx_cmd.cmd &&
-                        SD_CMDS[i].crc == rx_cmd.crc) begin
+                foreach (SD_CMDS[i]) begin : search_for_cmd
+                    if (SD_CMDS[i].cmd == rx_cmd.cmd) begin
                         //Copy the matching command from the table
                         rx_cmd = SD_CMDS[i];
                         cmd = cmd_num'(rx_cmd.cmd);
+                        cmd_checklist(cmd);
                         $display("SD-CARD: %s detected, CRC: %2h\n", cmd.name(),rx_cmd.crc);
                         rsp = 1;
+                        cmd_detected = 1;
                     end
                 end
                 @(posedge sclk);
+                assert(cmd_detected== 1)
+                    else $fatal(0, "\nReceived CMD does not match INIT COMMANDS or One block READ OR WRITE");
                 data_packet = 0;
             end
         end while (~cs & ~rsp);

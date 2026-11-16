@@ -4,10 +4,12 @@ TOP_MODULE = tb_apb_spi
 
 BENDER_TARGETS = \
 	-t verilator \
+	-t tb \
+	-t rtl \
 
 WAIVER = ./verilator/waiver.vlt
-# runs a GNU shell command: generates simulator file list (flist-plus) which includes source files, include directories and compiler options, (script) tells bender to generate a script or file list. 
-SRC_FILES          = $(shell bender script $(BENDER_FLAGS) flist-plus $(BENDER_TARGETS)) 
+# runs a GNU shell command: generates simulator file list (flist-plus) which includes source files, include directories and compiler options, (script) tells bender to generate a script or file list.
+SRC_FILES          = $(shell bender script $(BENDER_FLAGS) flist-plus $(BENDER_TARGETS))
 
 VDEFS = \
 	+define+VERILATOR=1 \
@@ -40,7 +42,7 @@ VFLAGS = \
 	--unroll-count 256 \
 	--Mdir $(VERIL_BUILD_DIR) \
 
-.PHONY: 
+.PHONY:
 all: lint verilate simv \
 
 # --lint-only runs verilator as a linter
@@ -83,4 +85,3 @@ simv:
 .PHONY: cleanv
 cleanv:
 	rm -rf $(VERIL_BUILD_DIR)
-

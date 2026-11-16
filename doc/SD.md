@@ -33,7 +33,6 @@ Data transfer available 1bit/clk cycle so for init 400kHz 40 kB/s and after init
 
 ### Structure of an SD-card
 
-![alt text](image-16.png)  
 - https://www.dejazzer.com/ee379/lecture_notes/lec12_sd_card.pdf  
 
 ### Versions
@@ -269,4 +268,4 @@ Card data storage is divided into multiple sectors, each sector contains 512 byt
 [1] https://nodeloop.org/guides/sd-card-spi-init-guide/  
 [2] http://bikealive.nl/sd-v2-initialization.html  (Note: HTTP not HTTPS)
 [3] https://www.dejazzer.com/ee379/lecture_notes/lec12_sd_card.pdf   
-[4] https://elm-chan.org/docs/mmc/mmc_e.html#spimode 
+[4] https://elm-chan.org/docs/mmc/mmc_e.html#spimode
